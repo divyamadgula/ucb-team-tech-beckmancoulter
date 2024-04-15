@@ -1,0 +1,62 @@
+const Gpio = require('onoff').Gpio; // Import the onoff library
+
+// GPIO Pins Initialized
+// Department A
+const buttonA1 = new Gpio(17, 'in', 'rising', { debounceTimeout: 10 }); // A1 controls Department A lights
+const buttonA2 = new Gpio(27, 'in', 'rising', { debounceTimeout: 10 }); // A2 controls Department B lights
+const lightsA = new Gpio(22, 'out'); // Lights for Department A
+
+// Department B
+const buttonB1 = new Gpio(23, 'in', 'rising', { debounceTimeout: 10 }); // B1 controls Department B lights
+const buttonB2 = new Gpio(24, 'in', 'rising', { debounceTimeout: 10 }); // B2 controls Department A lights
+const lightsB = new Gpio(25, 'out'); // Lights for Department B
+
+// trigger lights function
+const toggleLights = (lights) => {
+    const currentState = lights.readSync();
+    lights.writeSync(currentState ^ 1); // Toggle state
+};
+
+// dep a buttons 
+buttonA1.watch((err, value) => {
+    if (err) {
+        console.error('button a1 error', err);
+        return;
+    }
+    toggleLights(lightsA);
+});
+
+buttonA2.watch((err, value) => {
+    if (err) {
+        console.error('button a2 error', err);
+        return;
+    }
+    toggleLights(lightsB);
+});
+
+// dep b buttons 
+buttonB1.watch((err, value) => {
+    if (err) {
+        console.error('button b1 error', err);
+        return;
+    }
+    toggleLights(lightsB);
+});
+
+buttonB2.watch((err, value) => {
+    if (err) {
+        console.error('button b2 error', err);
+        return;
+    }
+    toggleLights(lightsA);
+});
+
+// Cleanup on exit
+process.on('SIGINT', () => {
+    buttonA1.unexport();
+    buttonA2.unexport();
+    lightsA.unexport();
+    buttonB1.unexport();
+    buttonB2.unexport();
+    lightsB.unexport();
+});
